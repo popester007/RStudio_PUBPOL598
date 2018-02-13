@@ -1,0 +1,191 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r, warning=FALSE, message=FALSE}
+install.packages(c('ggthemes', 'scales'))
+```
+
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(ggthemes)
+library(scales)
+donor <- read.csv('https://goo.gl/tm9JQ5')
+police <- read.csv('https://goo.gl/nNAuDy')
+
+donor %>% head(2)
+# donor %>% ls()
+# donor %>% summary()
+
+# police %>% head(2)
+# police %>% ls()
+# police %>% summary()
+```
+
+```{r, warning=FALSE, message=FALSE}
+mpg %>% ggplot() + geom_point(aes(displ, hwy))
+```
+
+```{r, warning=FALSE, message=FALSE}}
+donor %>% ggplot(aes(primary_general)) + geom_bar()
+```
+
+now with color
+```{r, warning=FALSE, message=FALSE}}
+donor %>% ggplot(aes(primary_general, fill = primary_general)) + geom_bar()
+```
+
+exercise with police data
+```{r, warning=FALSE, message=FALSE}}
+police %>% 
+  filter(
+    district_sector %in% c('B', 'E', 'D', 'R', 'O', 'C', 'K') &
+          event_clearance_group %in% c('TRAFFIC RELATED CALLS','FRAUD CALLS','BURGLARY', 'BIKE')) %>%
+  ggplot(aes(district_sector, fill = event_clearance_group)) + geom_bar()
+```
+
+adding lables to graphs
+```{r}
+donor %>%
+  ggplot(aes(primary_general, fill = primary_general)) +
+  geom_bar () +
+  labs(x = 'Election Type', y = 'Donations (#)')
+```
+
+now for the police data
+```{r, warning=FALSE, message=FALSE}}
+police %>% 
+  filter(
+    district_sector %in% c('B', 'E', 'D', 'R', 'O', 'C', 'K') &
+          event_clearance_group %in% c('TRAFFIC RELATED CALLS','FRAUD CALLS','BURGLARY', 'BIKE')) %>%
+  ggplot(aes(district_sector, fill = event_clearance_group)) + geom_bar() +
+  labs(x = 'District Sector', y = 'Incidents by Event Clearance Group')
+```
+
+to remove the legend name:
+```{r, warning=FALSE, message=FALSE}}
+police %>% 
+  filter(
+    district_sector %in% c('B', 'E', 'D', 'R', 'O', 'C', 'K') &
+          event_clearance_group %in% c('TRAFFIC RELATED CALLS','FRAUD CALLS','BURGLARY', 'BIKE')) %>%
+  ggplot(aes(district_sector, fill = event_clearance_group)) + geom_bar() +
+  labs(x = 'District Sector', y = 'Incidents by Event Clearance Group (#)', fill = element_blank())
+```
+
+```{r}
+library(tidyverse)
+```
+
+adding titles and subtitles
+```{r, warning=FALSE, message=FALSE}}
+police %>% 
+  filter(
+    district_sector %in% c('B', 'E', 'D', 'R', 'O', 'C', 'K') &
+          event_clearance_group %in% c('TRAFFIC RELATED CALLS','FRAUD CALLS','BURGLARY', 'BIKE')) %>%
+  ggplot(aes(district_sector, fill = event_clearance_group)) + geom_bar() +
+  labs(x = 'District Sector', y = 'Incidents by Event Clearance Group (#)', fill = element_blank(), title = 'Incidents by Clearance Events', subtitle = 'per District Sector')
+```
+
+to get themes
+```{r, warning=FALSE, message=FALSE}}
+police %>% 
+  filter(
+    district_sector %in% c('B', 'E', 'D', 'R', 'O', 'C', 'K') &
+          event_clearance_group %in% c('TRAFFIC RELATED CALLS','FRAUD CALLS','BURGLARY', 'BIKE') ) %>%
+  ggplot(aes(district_sector, fill = event_clearance_group)) + 
+    geom_bar() +
+    labs(x = 'District Sector', y = 'Incidents by Event Clearance Group (#)', fill = element_blank(), title = 'Incidents by Clearance Events', subtitle = 'per District Sector') + 
+  theme_economist() + 
+  scale_fill_economist()
+```
+
+build a histogram for the donor data
+```{r}
+donor %>%
+  filter(amount <1000) %>%
+  ggplot(aes(amount)) + geom_histogram()
+```
+now with density
+```{r, warning=FALSE, message=FALSE}}
+donor %>%
+  filter(amount <1000) %>%
+  ggplot(aes(amount)) + geom_density()
+```
+
+now try scatterplots
+```{r, warning=FALSE, message=FALSE}}
+donor %>%
+  ggplot(aes(receipt_year, election_year)) + geom_point()
+```
+
+now line plot
+```{r, warning=FALSE, message=FALSE}}
+donor %>%
+  ggplot(aes(receipt_year, amount)) + geom_line()
+```
+
+now make a scatterplot for police
+```{r, warning=FALSE, message=FALSE}}
+police %>%
+  ggplot(aes(latitude, longitude, color = district_sector, alpha = district_sector)) + geom_point() +
+  theme_classic()
+```
+
+aggregate data
+```{r}
+donor %>% group_by(type, party) %>% summarise(dollars = sum(amount, na.rm = TRUE))
+```
+
+turn it into a chart. **coord_flip turns bars sideways
+```{r}
+donor %>% 
+  group_by(type, party) %>% 
+  summarise(dollars = sum(amount, na.rm = TRUE)) %>%
+  ggplot(aes(type, dollars, fill = party)) + geom_bar(stat = "identity") + 
+  coord_flip() + 
+  scale_y_continuous(labels = dollar) + theme_classic()
+```
+
+exercise
+```{r}
+donor %>%
+  group_by(contributor_state) %>%
+  summarise(avg_amount = mean(amount, na.rm = TRUE)) %>%
+  filter(! contributor_state %in% NA) %>%
+  ggplot(aes(reorder(contributor_state, -avg_amount), avg_amount)) +
+  geom_bar(stat = 'identity') +
+  scale_y_continuous(labels = dollar) + theme_classic()
+```
+
+```{r}
+str(police)
+```
+
+lets use event clearance ampm and district sector
+```{r, warning=FALSE, message=FALSE}}
+police %>% 
+  filter(
+    district_sector %in% c('B', 'E', 'D', 'R', 'O', 'C', 'K') ) %>%
+  ggplot(aes(district_sector, fill = event_clearance_ampm)) + 
+    geom_bar() +
+    labs(x = 'District Sector', y = 'Incidents by Time of Day', fill = element_blank(), title = 'Incidents by Time of Day', subtitle = 'per District Sector') + 
+  theme_economist() + 
+  scale_fill_economist()
+
+```
+
+```{r, warning=FALSE, message=FALSE}}
+police %>% 
+  filter(
+          event_clearance_group %in% c('TRAFFIC RELATED CALLS','FRAUD CALLS','BURGLARY', 'BIKE') ) %>%
+  ggplot(aes(event_clearance_group, fill = event_clearance_ampm)) + 
+    geom_bar() + coord_flip() +
+    labs(x = 'District Sector', y = 'Incidents by Time of Day', fill = element_blank(), title = 'Incidents by Time of Day', subtitle = 'per District Sector') + 
+  theme_economist() + 
+  scale_fill_economist()
+
+```
+
+
